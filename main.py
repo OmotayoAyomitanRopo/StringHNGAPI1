@@ -17,7 +17,6 @@ def createstr(req: String_Request):
     if not isinstance(req.value, str):
         raise HTTPException(status_code=422, detail="Invalid data type for must be string")
     
-
     record = create_string(req.value)
     if record is None:
         raise HTTPException(status_code=409, detail="String already exists in the system")
@@ -64,6 +63,17 @@ def filter_by_natural_lang(query: str):
         filters["is_palindrome"] = True
     if "single word" in query_lower:
         filters["word_count"] = 1
+        
+    if "shorter than" in query_lower:
+        match = re.search(r"shorter than (\d+)", query_lower)
+        if match:
+            filters["max_length"] = int(match.group(1)) - 1
+
+    if "exactly" in query_lower and "characters" in query_lower:
+        match = re.search(r"exactly (\d+)", query_lower)
+        if match:
+            filters["min_length"] = filters["max_length"] = int(match.group(1))
+
     if "longer than" in query_lower:
         import re
         match = re.search(r"longer than (\d+)", query_lower)
@@ -88,8 +98,9 @@ def filter_by_natural_lang(query: str):
     }
 
 @app.delete("/strings/{string_value}", status_code=204)
-def delete_string_vlue(string_value: str):
-    result = delete_string(string_value)
+def delete_string_value(string_value: str):
+    clean_value = string_value.strip()
+    result = delete_string(clean_value)
     if not result:
         raise HTTPException(status_code=404, detail="String does not exist in the system")
     return
