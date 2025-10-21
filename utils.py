@@ -2,7 +2,7 @@ def use_filters(data, filters):
     results = data
 
     if filters.get("is_palindrome") is not None:
-        results = [x for x in results if x["properties"]["is_palindrome"] == filters["is palindrom"]]
+        results = [x for x in results if x["properties"]["is_palindrome"] == filters["is palindrome"]]
 
     if filters.get("min_length") is not None:
         results = [x for x in results if x["properties"]["length"] >= filters["min_length"]]
