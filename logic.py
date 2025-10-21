@@ -1,5 +1,6 @@
 import hashlib
 from collections import Counter
+import re
 
 # Function defination taking a single string argument
 # The function intends to return a dictionary 
@@ -11,7 +12,8 @@ def analyze_string(value: str) -> dict:
     length = len(clean_str)
 
     # Checking if string is palidrome
-    is_palindrome = clean_str.lower() == clean_str[::-1].lower()
+    normalized = re.sub(r'[^a-zA-Z0-9]', '', clean_str).lower()
+    is_palindrome = normalized == normalized[::-1]
 
     # Counting of distinct characters in the string
     unique_char = len(set(clean_str))
@@ -34,9 +36,9 @@ def analyze_string(value: str) -> dict:
         "char_frequency": char_frequency
     }
 
-# if __name__ == "__main__":
-#     import sys
+if __name__ == "__main__":
+    import sys
     
-#     input_string = sys.argv[1]
-#     result = analyze_string(input_string)
-#     print(result)
+    input_string = sys.argv[1]
+    result = analyze_string(input_string)
+    print(result)
