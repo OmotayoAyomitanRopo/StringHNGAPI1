@@ -27,7 +27,7 @@ def create_string(value: str):
         "id": hash_id,
         "value": clean_value,
         "properties": properties,
-        "created_at": datetime.utcnow()
+        "created_at": datetime.utcnow().isoformat() + "Z"
     }
     return DB[hash_id]
 
