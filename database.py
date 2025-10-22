@@ -18,7 +18,7 @@ def create_string(value: str):
     propert = analyze_string(clean_value)
 
     # Extracting the SHA-256 hash, whiich will be used as a unique property
-    hash_id = propert["SHA256_hash"]
+    hash_id = propert["sha256_hash"]
 
     if hash_id in DB: #If the unque identifier (hash_id) already exist in database
         return None
