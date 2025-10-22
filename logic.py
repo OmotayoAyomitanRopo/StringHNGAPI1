@@ -32,8 +32,8 @@ def analyze_string(value: str) -> dict:
         "is_palindrome": is_palindrome,
         "unique_char": unique_char,
         "word_count": word_count,
-        "SHA256_hash": SHA256_hash,
-        "char_frequency": char_frequency
+        "sha256_hash": SHA256_hash,
+        "character_frequency": char_frequency
     }
 
 if __name__ == "__main__":

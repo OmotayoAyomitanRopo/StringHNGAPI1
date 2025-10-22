@@ -3,6 +3,7 @@ from typing import Optional
 from models import String_Record, String_Properties, String_Request, Filter_Response
 from database import create_string, get_all_strings, get_string_by_value, delete_string
 from utils import use_filters
+import re
 
 app = FastAPI(title="My HNG String Analysis API", version="1.0")
 
@@ -59,11 +60,17 @@ def filter_by_natural_lang(query: str):
     print(">>> FILTER endpoint hit with query:", query_lower)
     filters = {}
 
-    if "palindromic" in query_lower:
+    if "palindromes" in query_lower or "palindromic" in query_lower:
         filters["is_palindrome"] = True
+
     if "single word" in query_lower:
         filters["word_count"] = 1
         
+    if "longer than" in query_lower:
+        match = re.search(r"longer than (\d+)", query_lower)
+        if match:
+            filters["min_length"] = int(match.group(1)) + 1
+
     if "shorter than" in query_lower:
         match = re.search(r"shorter than (\d+)", query_lower)
         if match:
@@ -74,14 +81,8 @@ def filter_by_natural_lang(query: str):
         if match:
             filters["min_length"] = filters["max_length"] = int(match.group(1))
 
-    if "longer than" in query_lower:
-        import re
-        match = re.search(r"longer than (\d+)", query_lower)
-        if match:
-            filters["min_length"] = int(match.group(1)) + 1
-    if "containing the letter" in query_lower:
-        import re
-        match = re.search(r"letter (\w)", query_lower)
+    if "containing" in query_lower:
+        match = re.search(r"containing ['\"]?(\w+)['\"]?", query_lower)
         if match:
             filters["contains_char"] = match.group(1)
 

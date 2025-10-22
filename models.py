@@ -10,10 +10,10 @@ class String_Request(BaseModel):
 class String_Properties(BaseModel):
     length: int
     is_palindrome: bool
-    unique_char: int
+    unique_chars: int
     word_count: int
-    SHA256_hash: str
-    char_frequency: Dict[str, int]
+    sha256_hash: str
+    character_frequency: Dict[str, int]
 
 class String_Record(BaseModel):
     id: str
