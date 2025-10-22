@@ -15,18 +15,19 @@ def create_string(value: str):
     clean_value = normalize_string(value)
     # calling the string analyzer function to retrieve the
     # Property of the input string
-    propert = analyze_string(clean_value)
+    properties = analyze_string(clean_value)
 
     # Extracting the SHA-256 hash, whiich will be used as a unique property
-    hash_id = propert["sha256_hash"]
+    hash_id = properties["sha256_hash"]
 
     if hash_id in DB: #If the unque identifier (hash_id) already exist in database
         return None
+    
     DB[hash_id] = {
         "id": hash_id,
         "value": clean_value,
-        "properties": propert,
-        "created_at": datetime.utcnow().isoformat() + "Z"
+        "properties": properties,
+        "created_at": datetime.utcnow()
     }
     return DB[hash_id]
 

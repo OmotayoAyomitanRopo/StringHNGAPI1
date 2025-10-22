@@ -82,7 +82,7 @@ def filter_by_natural_lang(query: str):
             filters["min_length"] = filters["max_length"] = int(match.group(1))
 
     if "containing" in query_lower:
-        match = re.search(r"containing ['\"]?(\w+)['\"]?", query_lower)
+        match = re.search(r"containing ['\"]?([\w\s]+)['\"]?", query_lower)
         if match:
             filters["contains_char"] = match.group(1)
 
