@@ -1,6 +1,7 @@
 from sqlalchemy.future import select
 from db import SessionLocal
-from models import StringRecord
+from models_sql import Base
+from models_sql import StringRecord
 from logic import analyze_string
 
 async def create_string(value: str):
@@ -27,3 +28,31 @@ async def create_string(value: str):
         await session.commit()
         await session.refresh(new_record)
         return new_record
+
+from sqlalchemy.future import select
+from db import SessionLocal
+from models_sql import StringRecord
+
+async def get_all_strings():
+    async with SessionLocal() as session:
+        result = await session.execute(select(StringRecord))
+        return result.scalars().all()
+
+async def get_string_by_value(value: str):
+    async with SessionLocal() as session:
+        result = await session.execute(
+            select(StringRecord).where(StringRecord.value == value.strip())
+        )
+        return result.scalar()
+
+async def delete_string(value: str):
+    async with SessionLocal() as session:
+        result = await session.execute(
+            select(StringRecord).where(StringRecord.value == value.strip())
+        )
+        record = result.scalar()
+        if not record:
+            return False
+        await session.delete(record)
+        await session.commit()
+        return True

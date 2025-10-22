@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from models_sql import Base
 
+
 DATABASE_URL = "sqlite+aiosqlite:///./strings.db"
 
 engine = create_async_engine(DATABASE_URL, echo=False)
