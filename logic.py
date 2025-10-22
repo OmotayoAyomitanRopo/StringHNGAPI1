@@ -30,7 +30,7 @@ def analyze_string(value: str) -> dict:
     return {
         "length": length,
         "is_palindrome": is_palindrome,
-        "unique_char": unique_char,
+        "unique_chars": unique_char,
         "word_count": word_count,
         "sha256_hash": SHA256_hash,
         "character_frequency": char_frequency
