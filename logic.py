@@ -2,6 +2,31 @@ import hashlib
 from collections import Counter
 import re
 
+def analyze_string(value: str) -> dict:
+    clean_str = value.strip()
+    normalized = re.sub(r'[^a-zA-Z0-9]', '', value.lower())
+    is_palindrome = normalized == normalized[::-1]
+    length = len(clean_str)
+    unique_chars = len(set(normalized))
+    word_count = len(clean_str.split())
+    sha256_hash = hashlib.sha256(clean_str.encode()).hexdigest()
+    character_frequency = dict(Counter(normalized))
+
+    return {
+        "length": length,
+        "is_palindrome": is_palindrome,
+        "unique_chars": unique_chars,
+        "word_count": word_count,
+        "sha256_hash": sha256_hash,
+        "character_frequency": character_frequency
+    }
+
+
+
+""" import hashlib
+from collections import Counter
+import re
+
 # Function defination taking a single string argument
 # The function intends to return a dictionary 
 def analyze_string(value: str) -> dict:
@@ -40,4 +65,4 @@ def analyze_string(value: str) -> dict:
 #
 #  input_string = sys.argv[1]
 #   result = analyze_string(input_string)
-#   print(result)
+#   print(result) """

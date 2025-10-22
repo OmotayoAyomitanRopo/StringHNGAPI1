@@ -5,6 +5,10 @@ from utils import use_filters
 import re
 import asyncio
 from db import init_db
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="My HNG String Analysis API", version="1.0")
 
@@ -105,30 +109,12 @@ async def filtered_strings(
         "filters_applied": {k: v for k, v in filters.items() if v is not None}
     }
 
-@app.get("/strings/{string_value}", response_model=String_Record)
-async def getstr(string_value: str):
-    record = await get_string_by_value(string_value)
-    if not record:
-        raise HTTPException(status_code=404, detail="String does not exist in the system")
-
-    return {
-        "id": record.id,
-        "value": record.value,
-        "created_at": record.created_at,
-        "properties": {
-            "length": record.length,
-            "is_palindrome": record.is_palindrome,
-            "unique_chars": record.unique_chars,
-            "word_count": record.word_count,
-            "sha256_hash": record.sha256_hash,
-            "character_frequency": record.character_frequency
-        }
-    }
-
 @app.get("/strings/filter-by-natural-language", response_model=Filter_Response)
 async def filter_by_natural_lang(query: str):
     query_lower = query.lower()
     filters = {}
+
+    logger.info(f"[NL FILTER] Incoming query: '{query}'")
 
     if "palindrome" in query_lower:
         filters["is_palindrome"] = True
@@ -157,11 +143,20 @@ async def filter_by_natural_lang(query: str):
     if end_match:
         filters["ends_with"] = end_match.group(1).lower()
 
+    word_match = re.search(r"(?:with|having)? ?(\d+) words?", query_lower)
+    if word_match:
+        filters["word_count"] = int(word_match.group(1))
+
+    logger.info(f"[NL FILTER] Parsed filters: {filters}")
+
     if not filters:
+        logger.warning(f"[NL FILTER] Failed to parse query: '{query}'")
         raise HTTPException(status_code=400, detail="Unable to parse natural language query")
 
     raw_data = await get_all_strings()
     filtered = use_filters(raw_data, filters)
+
+    logger.info(f"[NL FILTER] Filtered {len(filtered)} result(s)")
 
     transformed = [
         {
@@ -184,6 +179,26 @@ async def filter_by_natural_lang(query: str):
         "data": transformed,
         "count": len(transformed),
         "filters_applied": filters
+    }
+
+@app.get("/strings/{string_value}", response_model=String_Record)
+async def getstr(string_value: str):
+    record = await get_string_by_value(string_value)
+    if not record:
+        raise HTTPException(status_code=404, detail="String does not exist in the system")
+
+    return {
+        "id": record.id,
+        "value": record.value,
+        "created_at": record.created_at,
+        "properties": {
+            "length": record.length,
+            "is_palindrome": record.is_palindrome,
+            "unique_chars": record.unique_chars,
+            "word_count": record.word_count,
+            "sha256_hash": record.sha256_hash,
+            "character_frequency": record.character_frequency
+        }
     }
 
 @app.delete("/strings/{string_value}", status_code=204)
