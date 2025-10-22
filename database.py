@@ -1,4 +1,60 @@
-from typing import Dict
+from db import SessionLocal
+from models_sql import StringRecord
+from logic import analyze_string
+from sqlalchemy.future import select
+import hashlib
+
+async def create_string(value: str):
+    async with SessionLocal() as session:
+        clean_value = value.strip().lower()
+        properties = analyze_string(clean_value)
+        hash_id = properties["sha256_hash"]
+
+        result = await session.execute(select(StringRecord).where(StringRecord.id == hash_id))
+        if result.scalar():
+            return None
+
+        new_record = StringRecord(
+            id=hash_id,
+            value=clean_value,
+            length=properties["length"],
+            is_palindrome=properties["is_palindrome"],
+            unique_chars=properties["unique_chars"],
+            word_count=properties["word_count"],
+            sha256_hash=hash_id,
+            character_frequency=properties["character_frequency"]
+        )
+        session.add(new_record)
+        await session.commit()
+        await session.refresh(new_record)
+        return new_record
+
+async def get_string_by_value(value: str):
+    async with SessionLocal() as session:
+        clean_value = value.strip().lower()
+        hash_id = hashlib.sha256(clean_value.encode()).hexdigest()
+        result = await session.execute(select(StringRecord).where(StringRecord.id == hash_id))
+        return result.scalar()
+
+async def delete_string(value: str):
+    async with SessionLocal() as session:
+        clean_value = value.strip().lower()
+        hash_id = hashlib.sha256(clean_value.encode()).hexdigest()
+        result = await session.execute(select(StringRecord).where(StringRecord.id == hash_id))
+        record = result.scalar()
+        if record:
+            await session.delete(record)
+            await session.commit()
+            return True
+        return False
+
+async def get_all_strings():
+    async with SessionLocal() as session:
+        result = await session.execute(select(StringRecord))
+        return result.scalars().all()
+
+
+""" from typing import Dict
 from logic import analyze_string
 from datetime import datetime
 import hashlib
@@ -27,7 +83,7 @@ def create_string(value: str):
         "id": hash_id,
         "value": clean_value,
         "properties": properties,
-        "created_at": datetime.utcnow().isoformat() + "Z"
+        "created_at": datetime.utcnow()
     }
     return DB[hash_id]
 
@@ -46,3 +102,4 @@ def delete_string(value: str):
 #This will return all the dictionary value in the in-memory.
 def get_all_strings():
     return list(DB.values())
+ """
