@@ -19,8 +19,9 @@ class String_Record(BaseModel):
     properties: String_Properties
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 class Filter_Response(BaseModel):
     data: list[String_Record]

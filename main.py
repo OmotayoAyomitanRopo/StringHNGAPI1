@@ -25,14 +25,62 @@ async def createstr(req: String_Request):
     if record is None:
         raise HTTPException(status_code=409, detail="String already exists in the system")
 
-    return record
+    return {
+    "id": record.id,
+    "value": record.value,
+    "created_at": record.created_at,
+    "properties": {
+        "length": record.length,
+        "is_palindrome": record.is_palindrome,
+        "unique_chars": record.unique_chars,
+        "word_count": record.word_count,
+        "sha256_hash": record.sha256_hash,
+        "character_frequency": record.character_frequency
+    }
+}
 
-@app.get("/strings/{string_value}", response_model=String_Record)
-async def getstr(string_value: str):
-    record = await get_string_by_value(string_value)
-    if not record:
-        raise HTTPException(status_code=404, detail="String does not exist in the system")
-    return record
+@app.get("/strings", response_model=Filter_Response)
+async def filtered_strings(
+    is_palindrome: bool = Query(None),
+    min_length: int = Query(None),
+    max_length: int = Query(None),
+    word_count: int = Query(None),
+    contains_char: str = Query(None)
+):
+    filters = {
+        "is_palindrome": is_palindrome,
+        "min_length": min_length,
+        "max_length": max_length,
+        "word_count": word_count,
+        "contains_char": contains_char
+    }
+
+    raw_data = await get_all_strings()
+    filtered = use_filters(raw_data, filters)
+
+    # ✅ Transform each SQLAlchemy object into Pydantic-compatible dict
+    transformed = [
+        {
+            "id": item.id,
+            "value": item.value,
+            "created_at": item.created_at,
+            "properties": {
+                "length": item.length,
+                "is_palindrome": item.is_palindrome,
+                "unique_chars": item.unique_chars,
+                "word_count": item.word_count,
+                "sha256_hash": item.sha256_hash,
+                "character_frequency": item.character_frequency
+            }
+        }
+        for item in filtered
+    ]
+
+    return {
+        "data": transformed,
+        "count": len(transformed),
+        "filters_applied": {k: v for k, v in filters.items() if v is not None}
+    }
 
 @app.get("/strings", response_model=Filter_Response)
 async def filtered_strings(
@@ -55,6 +103,26 @@ async def filtered_strings(
         "data": filtered,
         "count": len(filtered),
         "filters_applied": {k: v for k, v in filters.items() if v is not None}
+    }
+
+@app.get("/strings/{string_value}", response_model=String_Record)
+async def getstr(string_value: str):
+    record = await get_string_by_value(string_value)
+    if not record:
+        raise HTTPException(status_code=404, detail="String does not exist in the system")
+
+    return {
+        "id": record.id,
+        "value": record.value,
+        "created_at": record.created_at,
+        "properties": {
+            "length": record.length,
+            "is_palindrome": record.is_palindrome,
+            "unique_chars": record.unique_chars,
+            "word_count": record.word_count,
+            "sha256_hash": record.sha256_hash,
+            "character_frequency": record.character_frequency
+        }
     }
 
 @app.get("/strings/filter-by-natural-language", response_model=Filter_Response)
@@ -81,7 +149,7 @@ async def filter_by_natural_lang(query: str):
     if contains_match:
         filters["contains_char"] = contains_match.group(2)
 
-        start_match = re.search(r"starting with ['\"]?(\w+)['\"]?", query_lower)
+    start_match = re.search(r"starting with ['\"]?(\w+)['\"]?", query_lower)
     if start_match:
         filters["starts_with"] = start_match.group(1).lower()
 
@@ -92,11 +160,29 @@ async def filter_by_natural_lang(query: str):
     if not filters:
         raise HTTPException(status_code=400, detail="Unable to parse natural language query")
 
-    data = await get_all_strings()
-    filtered = use_filters(data, filters)
+    raw_data = await get_all_strings()
+    filtered = use_filters(raw_data, filters)
+
+    transformed = [
+        {
+            "id": item.id,
+            "value": item.value,
+            "created_at": item.created_at,
+            "properties": {
+                "length": item.length,
+                "is_palindrome": item.is_palindrome,
+                "unique_chars": item.unique_chars,
+                "word_count": item.word_count,
+                "sha256_hash": item.sha256_hash,
+                "character_frequency": item.character_frequency
+            }
+        }
+        for item in filtered
+    ]
+
     return {
-        "data": filtered,
-        "count": len(filtered),
+        "data": transformed,
+        "count": len(transformed),
         "filters_applied": filters
     }
 
@@ -179,20 +265,20 @@ def filter_by_natural_lang(query: str):
         filters["word_count"] = 1
 
     # Length filters
-    longer_match = re.search(r"(longer|more) than (\d+)", query_lower)
+    longer_match = re.search(r"(longer|more) than (\\d+)", query_lower)
     if longer_match:
         filters["min_length"] = int(longer_match.group(2)) + 1
 
-    shorter_match = re.search(r"(shorter|less) than (\d+)", query_lower)
+    shorter_match = re.search(r"(shorter|less) than (\\d+)", query_lower)
     if shorter_match:
         filters["max_length"] = int(shorter_match.group(2)) - 1
 
-    exact_match = re.search(r"(exactly|equal to) (\d+) characters", query_lower)
+    exact_match = re.search(r"(exactly|equal to) (\\d+) characters", query_lower)
     if exact_match:
         filters["min_length"] = filters["max_length"] = int(exact_match.group(2))
 
     # Character containment
-    contains_match = re.search(r"(containing|includes|has) ['\"]?(\w+)['\"]?", query_lower)
+    contains_match = re.search(r"(containing|includes|has) ['\"]?(\\w+)['\"]?", query_lower)
     if contains_match:
         filters["contains_char"] = contains_match.group(2)
 
