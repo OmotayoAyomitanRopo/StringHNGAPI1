@@ -86,29 +86,6 @@ async def filtered_strings(
         "filters_applied": {k: v for k, v in filters.items() if v is not None}
     }
 
-@app.get("/strings", response_model=Filter_Response)
-async def filtered_strings(
-    is_palindrome: bool = Query(None),
-    min_length: int = Query(None),
-    max_length: int = Query(None),
-    word_count: int = Query(None),
-    contains_char: str = Query(None)
-):
-    filters = {
-        "is_palindrome": is_palindrome,
-        "min_length": min_length,
-        "max_length": max_length,
-        "word_count": word_count,
-        "contains_char": contains_char
-    }
-    data = await get_all_strings()
-    filtered = use_filters(data, filters)
-    return {
-        "data": filtered,
-        "count": len(filtered),
-        "filters_applied": {k: v for k, v in filters.items() if v is not None}
-    }
-
 @app.get("/strings/filter-by-natural-language", response_model=Filter_Response)
 async def filter_by_natural_lang(query: str):
     query_lower = query.lower()
@@ -181,6 +158,14 @@ async def filter_by_natural_lang(query: str):
         "filters_applied": filters
     }
 
+
+@app.delete("/strings/{string_value}", status_code=204)
+async def delete_string_value(string_value: str):
+    result = await delete_string(string_value)
+    if not result:
+        raise HTTPException(status_code=404, detail="String does not exist in the system")
+    return Response(status_code=204)
+
 @app.get("/strings/{string_value}", response_model=String_Record)
 async def getstr(string_value: str):
     record = await get_string_by_value(string_value)
@@ -200,13 +185,6 @@ async def getstr(string_value: str):
             "character_frequency": record.character_frequency
         }
     }
-
-@app.delete("/strings/{string_value}", status_code=204)
-async def delete_string_value(string_value: str):
-    result = await delete_string(string_value)
-    if not result:
-        raise HTTPException(status_code=404, detail="String does not exist in the system")
-    return Response(status_code=204)
 
 
 """ from fastapi import FastAPI, HTTPException, Query
