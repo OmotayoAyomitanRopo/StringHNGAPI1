@@ -22,7 +22,7 @@ def rootendpoint():
 @app.post("/strings", response_model=String_Record, status_code=201)
 async def createstr(req: String_Request):
     if not isinstance(req.value, str):
-        raise HTTPException(status_code=422, detail="Invalid data type, must be string")
+        raise HTTPException(status_code=422, detail="Invalid data type for must be string")
 
     record = await create_string(req.value.strip())
     if record is None:
@@ -37,7 +37,7 @@ async def createstr(req: String_Request):
             "is_palindrome": record.is_palindrome,
             "unique_chars": record.unique_chars,
             "word_count": record.word_count,
-            "sha256": record.sha256_hash,  # renamed to match HNG expectation
+            "sha256_hash": record.sha256_hash,
             "character_frequency": record.character_frequency
         }
     }
@@ -48,18 +48,14 @@ async def filtered_strings(
     min_length: int = Query(None),
     max_length: int = Query(None),
     word_count: int = Query(None),
-    contains_char: str = Query(None),
-    starts_with: str = Query(None),
-    ends_with: str = Query(None)
+    contains_char: str = Query(None)
 ):
     filters = {
         "is_palindrome": is_palindrome,
         "min_length": min_length,
         "max_length": max_length,
         "word_count": word_count,
-        "contains_char": contains_char,
-        "starts_with": starts_with,
-        "ends_with": ends_with
+        "contains_char": contains_char
     }
 
     raw_data = await get_all_strings()
@@ -75,7 +71,7 @@ async def filtered_strings(
                 "is_palindrome": item.is_palindrome,
                 "unique_chars": item.unique_chars,
                 "word_count": item.word_count,
-                "sha256": item.sha256_hash,
+                "sha256_hash": item.sha256_hash,
                 "character_frequency": item.character_frequency
             }
         }
@@ -98,31 +94,31 @@ async def filter_by_natural_lang(query: str):
     if "palindrome" in query_lower:
         filters["is_palindrome"] = True
 
-    shorter_match = re.search(r"(shorter|less) than (\d+)", query_lower, re.IGNORECASE)
+    shorter_match = re.search(r"(shorter|less) than (\d+)", query_lower)
     if shorter_match:
         filters["max_length"] = int(shorter_match.group(2)) - 1
 
-    longer_match = re.search(r"(longer|more) than (\d+)", query_lower, re.IGNORECASE)
+    longer_match = re.search(r"(longer|more) than (\d+)", query_lower)
     if longer_match:
         filters["min_length"] = int(longer_match.group(2)) + 1
 
-    exact_match = re.search(r"(exactly|equal to) (\d+) characters", query_lower, re.IGNORECASE)
+    exact_match = re.search(r"(exactly|equal to) (\d+) characters", query_lower)
     if exact_match:
         filters["min_length"] = filters["max_length"] = int(exact_match.group(2))
 
-    contains_match = re.search(r"(containing|includes|has) ['\"]?(\w+)['\"]?", query_lower, re.IGNORECASE)
+    contains_match = re.search(r"(containing|includes|has) ['\"]?(\w+)['\"]?", query_lower)
     if contains_match:
         filters["contains_char"] = contains_match.group(2)
 
-    start_match = re.search(r"starting with ['\"]?(\w+)['\"]?", query_lower, re.IGNORECASE)
+    start_match = re.search(r"starting with ['\"]?(\w+)['\"]?", query_lower)
     if start_match:
         filters["starts_with"] = start_match.group(1).lower()
 
-    end_match = re.search(r"ending with ['\"]?(\w+)['\"]?", query_lower, re.IGNORECASE)
+    end_match = re.search(r"ending with ['\"]?(\w+)['\"]?", query_lower)
     if end_match:
         filters["ends_with"] = end_match.group(1).lower()
 
-    word_match = re.search(r"(?:with|having)? ?(\d+) words?", query_lower, re.IGNORECASE)
+    word_match = re.search(r"(?:with|having)? ?(\d+) words?", query_lower)
     if word_match:
         filters["word_count"] = int(word_match.group(1))
 
@@ -147,7 +143,7 @@ async def filter_by_natural_lang(query: str):
                 "is_palindrome": item.is_palindrome,
                 "unique_chars": item.unique_chars,
                 "word_count": item.word_count,
-                "sha256": item.sha256_hash,
+                "sha256_hash": item.sha256_hash,
                 "character_frequency": item.character_frequency
             }
         }
@@ -182,7 +178,7 @@ async def getstr(string_value: str):
             "is_palindrome": record.is_palindrome,
             "unique_chars": record.unique_chars,
             "word_count": record.word_count,
-            "sha256": record.sha256_hash,
+            "sha256_hash": record.sha256_hash,
             "character_frequency": record.character_frequency
         }
     }
