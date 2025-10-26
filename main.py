@@ -21,9 +21,16 @@ def rootendpoint():
 
 @app.post("/strings", response_model=String_Record, status_code=201)
 async def createstr(req: String_Request):
+    if not req or req.value is None:
+        raise HTTPException(status_code=400, details='Invalid request body or missing "value" field')
+    
     if not isinstance(req.value, str):
         raise HTTPException(status_code=422, detail="Invalid data type for must be string")
 
+    value = req.value.strip()
+    if not value:
+        raise HTTPException(status_code=400, details='Invalid request body or missing "value" field')
+    
     record = await create_string(req.value.strip())
     if record is None:
         raise HTTPException(status_code=409, detail="String already exists in the system")
